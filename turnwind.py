@@ -20,7 +20,7 @@ GPIO.setup(18, GPIO.OUT) #LED
 pushed = False
 serialinit = False
 
-ser = serial.Serial("/dev/ttyAMA0", 38400)
+ser = serial.Serial("/dev/ttyAMA0", 4800)
 
 while True:
     if GPIO.input(4) == False and not pushed:
@@ -29,11 +29,8 @@ while True:
         pushed = False
     try:
         line = ser.readline()
-        lineb = line
         line = line.decode("ISO-8859-1")
-        if pushed:
-            ser.write(lineb)
-            print(line)
+        if not pushed:
             if re.match("^\$..MWV", line):
                 s = line.split(",")
                 heading = float(s[1])
@@ -41,16 +38,19 @@ while True:
                 s[1] = "%.2f" % heading
                 chk = checksum(','.join(s)[1:])
                 ser.write(bytes(','.join(s)+chk+"\r\n", "UTF-8"))
+                print(','.join(s))
             else:
                 ser.write(bytes(line, "UTF-8"))
+                print(line)
         else:
             ser.write(bytes(line, "UTF-8"))
+            print(line)
     except:
         pass
         sleep(.2)
 
     if pushed:
-        GPIO.output(18, 1)
-    else:
         GPIO.output(18, 0)
+    else:
+        GPIO.output(18, 1)
 
